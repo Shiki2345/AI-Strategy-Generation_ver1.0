@@ -1,0 +1,192 @@
+{
+  "policy_id": "buyer_account_checkout_block_001",
+  "policy_name": "买家号Checkout结账页屏蔽策略",
+  "policy_type": "blacklist",
+  "description": "屏蔽店铺买家账号的Secure Checkout结账页面，防止人员误操作或恶意下单导致账号资金损失或被平台风控锁定。下午5:30起生效屏蔽。",
+  "version": "2.0",
+  "created_at": "2026-04-13T00:00:00+08:00",
+  "updated_at": "2026-04-13T17:30:00+08:00",
+
+  "rag_match": {
+    "rag_entry_id": "rag_021",
+    "match_source": "用户截图验证",
+    "similarity": 1.0,
+    "note": "用户提供浏览器截图，地址栏确认 amazon.com/checkout/ 为真实Checkout页URL"
+  },
+
+  "target_resources": {
+    "account_type": "buyer_account",
+    "account_description": "店铺关联的亚马逊买家账号（amazon.com 买家侧，非 Seller Central）",
+    "sensitivity_level": "critical",
+    "risk_description": "恶意或误操作下单可触发平台风控，导致买家账号被锁定，进而影响关联卖家账号的正常运营",
+
+    "blocked_urls": [
+      {
+        "url": "https://www.amazon.com/checkout/",
+        "url_pattern": "www.amazon.com/checkout/*",
+        "match_type": "prefix",
+        "page_name": "Secure Checkout 结账页",
+        "description": "亚马逊买家端结账页面，包含收货地址、支付方式选择、订单确认，提交后即扣款下单",
+        "verified": true,
+        "verified_evidence": "用户提供浏览器截图，地址栏显示 amazon.com/checkout/... 页面标题为 Secure checkout，页面包含 Delivering to / Payment method / Order total 等结账元素",
+        "priority": 1
+      },
+      {
+        "url": "https://www.amazon.com/gp/cart/view.html",
+        "url_pattern": "www.amazon.com/gp/cart/*",
+        "match_type": "prefix",
+        "page_name": "购物车页面",
+        "description": "结账前置步骤，屏蔽购物车从源头阻断进入结账流程",
+        "verified": "partial",
+        "verified_evidence": "直接请求返回503（非404），服务器识别了该路径，但未获得页面截图确认",
+        "priority": 2
+      },
+      {
+        "url": "https://www.amazon.com/gp/buy/spc/handlers/display.html",
+        "url_pattern": "www.amazon.com/gp/buy/spc*",
+        "match_type": "prefix",
+        "page_name": "旧版下单确认页（Single Page Checkout）",
+        "description": "亚马逊历史版本的结账页面，可能仍在部分场景使用",
+        "verified": false,
+        "verified_evidence": "直接请求返回503（非404），路径存在但无法确认当前是否仍在使用",
+        "priority": 3
+      }
+    ]
+  },
+
+  "time_restrictions": {
+    "enabled": true,
+    "schedule": {
+      "mode": "daily_from_time",
+      "days_of_week": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
+      "time_range": {
+        "start": "17:30",
+        "end": "23:59"
+      },
+      "timezone": "Asia/Shanghai",
+      "description": "每日下午5:30起生效屏蔽，直至当日结束"
+    },
+    "note": "根据用户要求'大概在5:30左右把这个页面屏蔽'配置。如需全天屏蔽，将 enabled 改为 false 或 time_range 改为 00:00-23:59"
+  },
+
+  "access_control": {
+    "default_action": "deny",
+    "allow_override": false,
+    "approval_bypass": false,
+    "description": "完全黑名单模式，不提供申请通道，不允许任何绕过"
+  },
+
+  "user_scope": {
+    "apply_to": {
+      "description": "所有可登录买家账号的员工",
+      "roles": ["运营专员", "运营助理", "客服", "实习生", "所有员工"]
+    },
+    "exceptions": {
+      "roles": ["系统管理员"],
+      "users": [],
+      "groups": [],
+      "description": "仅系统管理员在特殊维护场景下可临时豁免（需记录日志）"
+    }
+  },
+
+  "block_behavior": {
+    "strategy": "hard_block",
+    "block_screen": {
+      "enabled": true,
+      "title": "此页面已被禁止访问",
+      "message": "你正在访问【买家账号结账页面 (Secure Checkout)】\n\n该页面已被安全策略屏蔽。\n在买家账号中下单可能导致账号资金损失，并触发平台风控导致账号被锁定。\n\n如确有采购需求，请联系管理员走授权流程。",
+      "show_blocked_url": false,
+      "actions": [
+        {
+          "type": "primary",
+          "label": "返回上一页",
+          "action": "go_back"
+        },
+        {
+          "type": "secondary",
+          "label": "联系管理员",
+          "action": "contact_admin"
+        }
+      ]
+    },
+    "add_to_cart_intercept": {
+      "enabled": true,
+      "description": "建议同步拦截加入购物车行为，从源头阻断",
+      "intercept_url_pattern": "www.amazon.com/gp/item-dispatch*",
+      "note": "此项需在浏览器扩展或代理层实现"
+    }
+  },
+
+  "enforcement": {
+    "strict_mode": true,
+    "bypass_allowed": false,
+    "log_all_events": true,
+    "log_retention_days": 180,
+    "events_to_log": [
+      "checkout_page_blocked",
+      "cart_page_blocked",
+      "add_to_cart_intercepted",
+      "policy_exception_used"
+    ],
+    "alert_on_repeated_attempt": {
+      "enabled": true,
+      "threshold": 3,
+      "window_minutes": 10,
+      "alert_to": ["管理员", "安全负责人"],
+      "description": "同一用户10分钟内触发3次拦截，自动发送高危告警"
+    }
+  },
+
+  "audit_trail": {
+    "enabled": true,
+    "capture_details": {
+      "user_info": ["user_id", "name", "role", "department"],
+      "access_log": ["timestamp", "blocked_url", "ip_address", "device_info"]
+    }
+  },
+
+  "compliance": {
+    "principle": "最小权限原则 + 账号安全保护",
+    "risk_level": "critical",
+    "risk_scenario": "内部人员恶意或误操作通过买家账号下单，可能：1.直接消耗账号资金；2.触发亚马逊风控导致买家账号被锁；3.大量异常订单影响关联卖家账号健康度",
+    "mitigation_strategy": "完全黑名单拦截 + 重复尝试告警 + 操作日志留存180天"
+  },
+
+  "deployment_notes": {
+    "implementation_options": [
+      {
+        "method": "浏览器扩展/管控插件",
+        "description": "在员工电脑上部署企业管控插件，配置URL黑名单规则",
+        "applies_to_url_patterns": ["www.amazon.com/checkout/*", "www.amazon.com/gp/cart/*", "www.amazon.com/gp/buy/spc*"]
+      },
+      {
+        "method": "网络代理/防火墙",
+        "description": "在公司出口网关或代理服务器上配置URL过滤规则",
+        "applies_to_url_patterns": ["www.amazon.com/checkout/*", "www.amazon.com/gp/cart/*"]
+      },
+      {
+        "method": "零信任访问平台",
+        "description": "通过零信任平台对买家账号相关URL进行细粒度访问控制"
+      }
+    ],
+    "important_reminder": "amazon.com 为 HTTPS，需确保代理或插件支持 HTTPS 流量解析，否则 URL 级过滤将不生效。"
+  },
+
+  "metadata": {
+    "created_by": "AI Access Policy Assistant",
+    "last_modified": "2026-04-13T17:30:00+08:00",
+    "version_history": [
+      {
+        "version": "1.0",
+        "date": "2026-04-13",
+        "change": "初始生成，URL基于模型训练知识"
+      },
+      {
+        "version": "2.0",
+        "date": "2026-04-13",
+        "change": "用户提供截图确认 amazon.com/checkout/ 为真实URL，调整URL优先级，将已验证URL置为P1首位；新增时间限制（17:30起生效）；移除低置信度的addressselect和payselect旧版路径"
+      }
+    ],
+    "tags": ["黑名单", "买家账号", "Checkout", "结账屏蔽", "下单拦截", "账号安全", "风控保护", "已验证URL"]
+  }
+}

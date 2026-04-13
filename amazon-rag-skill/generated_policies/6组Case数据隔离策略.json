@@ -1,0 +1,150 @@
+{
+  "policy_id": "case_data_isolation_group6_001",
+  "policy_name": "6组Case数据隔离策略",
+  "policy_type": "data_ownership_isolation",
+  "description": "6组成员仅能查看自己创建的Case，其他组成员无法查看6组所开的Case。基于数据所有权和组隔离原则实现记录级别的访问控制。",
+  "version": "1.0",
+  "created_at": "2026-04-13T00:00:00+08:00",
+
+  "target_resource": {
+    "resource_type": "case",
+    "resource_name": "Case工单记录",
+    "description": "系统中的Case/工单记录",
+    "sensitivity_level": "medium"
+  },
+
+  "visibility_rules": [
+    {
+      "rule_id": "rule_01",
+      "rule_name": "6组成员只能查看本人创建的Case",
+      "priority": 1,
+      "subject": {
+        "type": "group",
+        "group_id": "group_6",
+        "group_name": "6组"
+      },
+      "condition": {
+        "field": "created_by",
+        "operator": "equals",
+        "value": "{{current_user_id}}"
+      },
+      "action": "allow",
+      "description": "6组成员登录后，Case列表仅展示由本人（created_by = 当前用户ID）创建的记录"
+    },
+    {
+      "rule_id": "rule_02",
+      "rule_name": "其他组成员不可查看6组的Case",
+      "priority": 2,
+      "subject": {
+        "type": "group_exclude",
+        "excluded_group_id": "group_6",
+        "description": "非6组的所有成员"
+      },
+      "condition": {
+        "field": "owner_group",
+        "operator": "equals",
+        "value": "group_6"
+      },
+      "action": "deny",
+      "deny_message": "你无权查看该Case，此记录属于其他组。",
+      "description": "非6组用户在查询或访问Case时，系统自动过滤掉所有 owner_group = group_6 的记录"
+    }
+  ],
+
+  "data_filter": {
+    "enabled": true,
+    "filter_level": "row_level_security",
+    "description": "在数据库查询层或API层注入过滤条件，从源头隔离数据",
+    "filter_logic": {
+      "for_group_6_members": {
+        "sql_snippet": "WHERE created_by = :current_user_id AND owner_group = 'group_6'",
+        "description": "6组成员只能查到自己创建的Case"
+      },
+      "for_other_groups": {
+        "sql_snippet": "WHERE owner_group != 'group_6'",
+        "description": "非6组成员的查询结果中排除所有6组的Case"
+      }
+    }
+  },
+
+  "user_scope": {
+    "restricted_group": {
+      "group_id": "group_6",
+      "group_name": "6组",
+      "description": "本策略对6组全体成员生效"
+    },
+    "exceptions": {
+      "roles": ["系统管理员", "超级管理员"],
+      "groups": ["管理层"],
+      "description": "系统管理员和管理层可无视隔离规则，查看所有Case（用于运营审计）"
+    }
+  },
+
+  "access_actions_controlled": [
+    {
+      "action": "view_list",
+      "description": "Case列表页：自动过滤，不展示无权限记录"
+    },
+    {
+      "action": "view_detail",
+      "description": "Case详情页：直接访问他组Case链接时提示无权限"
+    },
+    {
+      "action": "search",
+      "description": "搜索功能：搜索结果自动排除无权限的Case"
+    },
+    {
+      "action": "export",
+      "description": "导出功能：只能导出有查看权限的Case"
+    }
+  ],
+
+  "block_behavior": {
+    "list_page": {
+      "strategy": "silent_filter",
+      "description": "列表页静默过滤，不展示无权限记录，不提示存在被隐藏的数据"
+    },
+    "detail_page": {
+      "strategy": "show_error",
+      "error_title": "无权访问",
+      "error_message": "你无权查看该Case，此记录不属于你所在的权限范围。",
+      "actions": [
+        { "label": "返回列表", "action": "go_back" }
+      ]
+    }
+  },
+
+  "enforcement": {
+    "strict_mode": true,
+    "bypass_allowed": false,
+    "log_all_events": true,
+    "log_retention_days": 90,
+    "events_to_log": [
+      "unauthorized_access_attempt",
+      "data_filter_applied",
+      "case_viewed",
+      "case_searched",
+      "case_exported"
+    ]
+  },
+
+  "audit_trail": {
+    "enabled": true,
+    "capture_details": {
+      "user_info": ["user_id", "name", "group", "role"],
+      "access_log": ["timestamp", "action", "case_id", "result", "ip_address"]
+    }
+  },
+
+  "compliance": {
+    "principle": "最小权限原则 + 数据所有权隔离",
+    "risk_level": "medium",
+    "mitigation_strategy": "行级别数据过滤 + 访问日志审计"
+  },
+
+  "metadata": {
+    "created_by": "AI Access Policy Assistant",
+    "last_modified": "2026-04-13T00:00:00+08:00",
+    "tags": ["数据隔离", "组隔离", "Case管理", "行级安全", "所有权控制", "6组"]
+  }
+}

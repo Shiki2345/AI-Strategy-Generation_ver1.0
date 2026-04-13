@@ -450,5 +450,64 @@
     "category": "product_management",
     "created_at": "2026-04-10T17:42:16.058151",
     "usage_count": 0
+  },
+  {
+    "id": "rag_021",
+    "user_description": "买家号结账页（Checkout）",
+    "exact_url": "https://www.amazon.com/checkout/",
+    "url_pattern": "www.amazon.com/checkout/*",
+    "verified": true,
+    "verified_at": "2026-04-13",
+    "verified_by": "用户截图确认（浏览器地址栏显示 amazon.com/checkout/...，页面标题 Secure checkout）",
+    "page_description": "亚马逊买家账号的Secure Checkout结账页面，包含收货地址、支付方式、订单总额，确认后即下单扣款",
+    "aliases": [
+      "买家号checkout",
+      "买家帐号结账",
+      "下单页面",
+      "买家号下单",
+      "Place Order页",
+      "买家checkout",
+      "结算页",
+      "确认下单"
+    ],
+    "keywords": [
+      "checkout",
+      "结账",
+      "下单",
+      "买家号",
+      "买家账号",
+      "购物车结算",
+      "Place Order",
+      "锁账号"
+    ],
+    "related_urls": [
+      {
+        "url": "https://www.amazon.com/gp/buy/spc/handlers/display.html",
+        "url_pattern": "www.amazon.com/gp/buy/spc*",
+        "description": "旧版Single Page Checkout确认下单页（可能已被新版替代，建议同时拦截）",
+        "verified": false
+      },
+      {
+        "url": "https://www.amazon.com/gp/cart/view.html",
+        "url_pattern": "www.amazon.com/gp/cart/*",
+        "description": "购物车页面（结账前置步骤）"
+      },
+      {
+        "url": "https://www.amazon.com/gp/buy/addressselect/handlers/display.html",
+        "url_pattern": "www.amazon.com/gp/buy/addressselect/*",
+        "description": "结账流程-选择收货地址"
+      },
+      {
+        "url": "https://www.amazon.com/gp/buy/payselect/handlers/display.html",
+        "url_pattern": "www.amazon.com/gp/buy/payselect/*",
+        "description": "结账流程-选择支付方式"
+      }
+    ],
+    "marketplace": "US",
+    "category": "buyer_account_checkout",
+    "risk_level": "critical",
+    "risk_description": "恶意下单可能导致账号资金损失或触发异常检测，进而导致买家账号被锁定或关联卖家账号受到影响",
+    "created_at": "2026-04-13T00:00:00+08:00",
+    "usage_count": 1
   }
 ]

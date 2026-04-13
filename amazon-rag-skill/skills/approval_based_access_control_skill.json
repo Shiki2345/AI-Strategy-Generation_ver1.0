@@ -1,361 +1,261 @@
 {
   "skill_metadata": {
-    "skill_id": "amazon_approval_access_v1",
-    "skill_name": "Amazon 页面审批制访问控制配置",
-    "version": "1.0.0",
-    "category": "访问控制 - 审批制",
-    "tags": ["审批制", "实时审批", "临时权限", "Amazon", "敏感页面"],
+    "skill_id": "amazon_approval_access_form_v2",
+    "skill_name": "Amazon 页面访问控制配置（表单版）",
+    "version": "2.0.0",
+    "category": "访问控制",
+    "tags": ["访问策略", "表单填写", "Amazon", "URL屏蔽", "审批制", "黑名单"],
     "author": "Amazon Access Policy Assistant",
     "created_at": "2024-01-15",
-    "description": "配置 Amazon Seller Central 页面的实时审批访问控制，适用于高敏感页面需要授权访问的场景"
+    "updated_at": "2026-04-13",
+    "description": "针对 Amazon Seller Central / 买家账号页面生成可直接填入平台表单的访问策略输出",
+    "output_target": "平台「新增访问策略」表单"
+  },
+
+  "platform_capability": {
+    "description": "继承主skill的平台能力边界定义",
+    "reference": "../体验内容/access_policy_skill_package/skill_definition.json → platform_capability",
+    "key_constraint": "平台的审批能力仅限两个选项：仅boss可审批 / 不允许申请访问。v1.0中的多级审批链、自定义审批表单、临时权限有效期等功能超出平台能力，不再输出。"
   },
 
   "applicable_scenarios": [
     {
-      "scene": "账户和财务信息保护",
-      "description": "限制普通员工访问包含银行、税务等敏感信息的页面",
-      "keywords": ["账户详情", "财务报告", "支付信息", "银行账户", "税务"],
-      "example": "运营专员访问账户详情页需要 BOSS 审批"
+      "scene": "高敏感页面完全屏蔽",
+      "description": "禁止访问结账、支付、账户设置等高风险页面",
+      "keywords": ["禁止", "屏蔽", "不允许", "锁账号", "下单"],
+      "form_mapping": {
+        "访问审批限制": "勾选'不允许申请访问'",
+        "tab": "指定网页生效策略"
+      },
+      "example": "禁止进入买家号checkout → 完全屏蔽，不允许申请"
     },
     {
-      "scene": "用户权限管理保护",
-      "description": "防止未授权人员修改用户权限和角色",
-      "keywords": ["用户管理", "权限设置", "角色分配", "子账号"],
-      "example": "普通管理员修改权限需要 IT 总监审批"
+      "scene": "敏感页面需BOSS审批",
+      "description": "访问账户详情、财务报告等需BOSS审批放行",
+      "keywords": ["审批", "批准", "BOSS同意", "申请访问"],
+      "form_mapping": {
+        "访问审批限制": "勾选'仅boss账号可审批'",
+        "tab": "指定网页生效策略"
+      },
+      "example": "运营访问账户详情页需要BOSS审批 → boss审批制"
     },
     {
-      "scene": "敏感操作审计",
-      "description": "对关键操作进行事前审批和事后审计",
-      "keywords": ["价格修改", "批量删除", "账户设置", "API 配置"],
-      "example": "批量修改产品价格需要运营主管审批"
+      "scene": "浏览器行为限制",
+      "description": "在账号环境内限制复制、下载、查看密码等行为",
+      "keywords": ["不能复制", "禁止下载", "看不了密码", "禁用F12"],
+      "form_mapping": {
+        "tab": "所有网页通用策略"
+      },
+      "example": "禁止在账号里查看密码明文 → 查看密码框设为'限制'"
     }
   ],
 
   "dialogue_flow": {
-    "phase_1_identify_target": {
-      "description": "识别目标页面并进行 RAG 检索",
-      "trigger_patterns": [
-        ".*不允许.*(访问|查看|打开).*",
-        ".*(需要|必须).*(审批|批准|同意).*",
-        ".*限制.*(运营|专员|员工|实习生).*"
+    "phase_1_check_and_identify": {
+      "description": "识别目标页面，通过RAG检索URL，并判断平台能力",
+      "steps": [
+        "1. 提取用户描述中的页面关键词",
+        "2. 调用RAG系统检索精确URL",
+        "3. 判断需求是否在平台能力范围内",
+        "4. 如果超出平台能力（如数据行级过滤），告知用户并终止",
+        "5. 确认策略类型：完全屏蔽 or BOSS审批"
       ],
-      "actions": [
-        "提取页面描述关键词",
-        "调用 RAG 系统检索精确 URL",
-        "展示匹配结果（相似度排序）",
-        "确认是否为目标页面"
-      ],
-      "next_phase": "phase_2_determine_control_type"
-    },
-
-    "phase_2_determine_control_type": {
-      "description": "判断访问控制类型",
+      "rag_integration": {
+        "search_trigger": "用户提到具体页面名称时",
+        "search_query_extraction": [
+          "提取页面关键词",
+          "识别站点信息（美国站、日本站等）",
+          "识别功能类别（账户、订单、广告等）"
+        ],
+        "result_handling": {
+          "high_similarity": ">= 0.8 直接确认URL",
+          "medium_similarity": "0.5-0.8 列出候选项让用户选",
+          "low_similarity": "< 0.5 请用户提供截图或输入URL"
+        }
+      },
       "decision_tree": {
-        "完全禁止": "blacklist_skill",
-        "需要审批": "approval_skill (当前)",
-        "只读模式": "readonly_skill",
-        "时间限制": "time_based_skill"
+        "完全禁止": {
+          "keywords": ["禁止", "屏蔽", "不允许", "拦截", "不能进"],
+          "form_action": "勾选'不允许申请访问' + 勾选'仅boss账号可审批'"
+        },
+        "需要审批": {
+          "keywords": ["审批", "批准", "申请", "BOSS同意"],
+          "form_action": "勾选'仅boss账号可审批'，不勾选'不允许申请访问'"
+        }
       },
-      "confirmation_keywords": {
-        "审批制": ["审批", "批准", "申请", "授权", "同意"],
-        "黑名单": ["禁止", "不允许", "屏蔽", "拦截"],
-        "只读": ["只能看", "不能改", "只读"],
-        "时间": ["工作时间", "上班期间", "特定时段"]
-      },
-      "next_phase": "phase_3_collect_approval_params"
+      "next_phase": "phase_2_collect_params"
     },
 
-    "phase_3_collect_approval_params": {
-      "description": "收集审批制访问控制参数",
+    "phase_2_collect_params": {
+      "description": "收集表单所需参数",
       "required_fields": [
         {
-          "field_name": "target_users",
-          "display_name": "限制对象",
-          "question": "这个限制适用于哪些人？",
-          "examples": ["运营专员", "初级员工", "实习生", "所有员工（管理层除外）"]
+          "field_name": "target_urls",
+          "maps_to_form": "tab_指定网页生效策略",
+          "source": "RAG检索结果 或 用户直接提供",
+          "verification": "如URL来自RAG推断，标注验证状态，建议用户截图确认"
         },
         {
-          "field_name": "approver",
-          "display_name": "审批人",
-          "question": "谁来审批访问申请？",
-          "options": [
-            "BOSS/CEO",
-            "直属上级",
-            "部门主管",
-            "IT 管理员",
-            "财务总监",
-            "多级审批"
-          ],
-          "allow_custom": true
+          "field_name": "effective_members",
+          "maps_to_form": "生效成员",
+          "question": "对哪些人生效？",
+          "default": "除BOSS外所有成员"
         },
         {
-          "field_name": "approval_mode",
-          "display_name": "审批模式",
-          "question": "选择审批方式：",
-          "options": [
-            {
-              "value": "real_time",
-              "label": "实时审批",
-              "description": "用户申请后立即通知审批人，审批后即可访问"
-            },
-            {
-              "value": "scheduled",
-              "label": "定期审批",
-              "description": "审批人定期（如每天）批量处理申请"
-            },
-            {
-              "value": "pre_authorized",
-              "label": "预授权",
-              "description": "审批人提前批准一段时间内的访问权限"
-            }
-          ],
-          "recommended": "real_time"
+          "field_name": "effective_accounts",
+          "maps_to_form": "生效平台账号",
+          "question": "对哪些平台账号生效？",
+          "default": "所有账号"
         },
         {
-          "field_name": "temporary_duration_control",
-          "display_name": "临时权限有效期控制",
-          "question": "临时访问权限的有效期由谁决定？",
-          "options": [
-            {
-              "value": "fixed",
-              "label": "固定时长",
-              "params": ["设定固定时长", "如：1 小时、4 小时、1 天"]
-            },
-            {
-              "value": "approver_decides",
-              "label": "审批人决定",
-              "params": ["提供时长选项供审批人选择"]
-            },
-            {
-              "value": "applicant_requests",
-              "label": "申请人请求",
-              "params": ["申请时填写需要的时长，审批人可调整"]
-            }
-          ]
+          "field_name": "effective_period",
+          "maps_to_form": "生效时段",
+          "question": "什么时候生效？",
+          "common_choices": {
+            "全天全周": "all_day_everyday preset",
+            "仅工作时间": "standard_workday preset",
+            "下班后": "after_work preset"
+          }
         },
         {
-          "field_name": "reason_required",
-          "display_name": "申请理由",
-          "question": "是否必须填写申请理由？",
-          "options": ["必填", "可选", "不需要"],
-          "recommendation": "可选（方便审批人判断，但不强制）"
-        },
-        {
-          "field_name": "time_scope",
-          "display_name": "生效时间",
-          "question": "这个审批策略什么时候生效？",
-          "options": [
-            "全天生效（7x24）",
-            "工作时间生效（非工作时间完全禁止）",
-            "非工作时间需审批（工作时间可直接访问）"
-          ]
-        },
-        {
-          "field_name": "approval_timeout",
-          "display_name": "审批超时",
-          "question": "审批人多久未处理后自动拒绝？",
-          "examples": ["15 分钟", "30 分钟", "1 小时", "4 小时", "不超时"],
-          "default": "30 分钟",
-          "recommendation": "建议设置超时，避免申请积压"
+          "field_name": "browser_controls",
+          "maps_to_form": "tab_所有网页通用策略",
+          "default_preset": "account_security（限制密码框，其余允许且记录）",
+          "note": "涉及登录账号的策略，建议默认限制查看密码框"
         }
       ],
-      "next_phase": "phase_4_configure_notifications"
+      "next_phase": "phase_3_confirm"
     },
 
-    "phase_4_configure_notifications": {
-      "description": "配置通知和用户体验",
-      "configuration_items": [
-        {
-          "item": "拦截页面提示",
-          "auto_generate": true,
-          "template": "🔒 需要审批才能访问\n\n你正在尝试访问【{{page_name}}】\n\n{{reason_why_restricted}}\n\n[🚀 申请访问权限] [返回]"
-        },
-        {
-          "item": "审批人通知方式",
-          "options": ["邮件", "短信", "APP 推送", "企业微信", "钉钉", "飞书"],
-          "multi_select": true,
-          "recommendation": "至少选择 2 种方式确保及时收到"
-        },
-        {
-          "item": "申请人状态通知",
-          "events": [
-            "申请已提交",
-            "审批已批准（自动跳转）",
-            "审批已拒绝（显示原因）",
-            "审批超时（自动拒绝）",
-            "权限即将到期（提前 5 分钟）",
-            "权限已到期"
-          ]
-        },
-        {
-          "item": "访问期间提醒",
-          "features": [
-            "页面顶部显示倒计时横幅",
-            "到期前弹窗提醒",
-            "是否允许延期（需重新审批）"
-          ]
-        }
+    "phase_3_confirm": {
+      "description": "确认配置，检查约束",
+      "checks": [
+        "策略名称 ≤ 24字符",
+        "策略描述 ≤ 400字符",
+        "URL验证状态标注",
+        "域名精准度确认（如 qq.com → v.qq.com）"
       ],
-      "next_phase": "phase_5_generate_config"
+      "next_phase": "phase_4_generate_form_output"
     },
 
-    "phase_5_generate_config": {
-      "description": "生成最终配置文件",
-      "output_format": "JSON",
-      "config_structure": {
-        "policy_identification": ["policy_id", "policy_name", "policy_type", "description"],
-        "target_resources": ["page_name", "exact_url", "url_pattern", "sensitivity_level"],
-        "time_restrictions": ["schedule", "timezone"],
-        "access_control": {
-          "approval_workflow": ["approver", "timeout", "notification_channels"],
-          "application_form": ["required_fields", "optional_fields"],
-          "temporary_access": ["duration_options", "expiry_behavior"]
+    "phase_4_generate_form_output": {
+      "description": "生成表单填写版输出",
+      "output_structure": {
+        "form_output": {
+          "策略名称": "≤24字符",
+          "生效成员": "平台选项值",
+          "生效平台账号": "平台选项值",
+          "生效时段": {"生效日期": {}, "生效周期": {}, "生效时间": {}},
+          "访问策略描述": "≤400字符",
+          "访问审批限制": {"仅boss账号可审批": "bool", "不允许申请访问": "bool"}
         },
-        "user_scope": ["apply_to", "exceptions"],
-        "block_behavior": ["block_screen", "approval_form_ui", "notifications"],
-        "enforcement": ["strict_mode", "logging", "audit_trail"],
-        "compliance": ["data_sensitivity", "risk_level"]
+        "tab_指定网页生效策略": [{"url_rule": "", "mode": "已限制|可访问", "behavior_controls": "仅mode=可访问时配置"}],
+        "tab_所有网页通用策略": {"复制": "允许|允许且记录|限制且记录", "文件上传": "同上", "文件下载": "同上", "打印": "同上", "鼠标点击": "允许|限制", "键盘输入": "允许|限制", "查看密码框": "允许|限制"}
       },
-      "auto_enhancements": [
-        "添加友好的用户界面文案",
-        "配置完整的通知模板",
-        "启用详细的审计日志",
-        "设置合理的默认值",
-        "包含时区信息",
-        "生成策略 ID 和版本号"
+      "output_rules": [
+        "所有字段值直接可填入表单",
+        "不输出平台表单中没有的字段",
+        "不输出 audit_trail、compliance、approval_chain、temporary_access 等超出平台能力的内容"
       ],
-      "next_phase": "phase_6_deliver_and_summarize"
+      "next_phase": "phase_5_deliver"
     },
 
-    "phase_6_deliver_and_summarize": {
-      "description": "交付配置并生成 Skill",
+    "phase_5_deliver": {
+      "description": "交付并同步RAG",
       "deliverables": [
-        "完整 JSON 配置文件",
-        "策略配置总览表格",
-        "用户体验预览（拦截页面、通知示例）",
-        "安全特性说明",
-        "审计报告说明",
-        "下一步操作建议"
+        "表单填写版 JSON",
+        "URL验证状态说明（如有RAG来源）"
       ],
-      "skill_generation": {
-        "extract_new_patterns": "识别对话中的新用户描述",
-        "update_rag": "将新的页面描述映射添加到 RAG 库",
-        "save_decision_rules": "保存决策树和推荐逻辑",
-        "document_best_practices": "记录最佳实践和注意事项"
+      "rag_update": {
+        "trigger": "对话中出现知识库没有的新页面描述或URL",
+        "action": "将新URL条目写入RAG库，标注来源和验证状态"
       }
     }
   },
 
-  "rag_integration": {
-    "search_trigger": "用户提到具体页面名称时",
-    "search_query_extraction": [
-      "提取页面关键词",
-      "识别站点信息（美国站、日本站等）",
-      "识别功能类别（账户、订单、广告等）"
-    ],
-    "result_handling": {
-      "high_similarity": ">= 0.8 时直接确认",
-      "medium_similarity": "0.5-0.8 时列出候选项让用户选择",
-      "low_similarity": "< 0.5 时询问用户提供更多信息或输入完整 URL"
-    },
-    "usage_tracking": "每次成功使用后增加 usage_count"
-  },
-
-  "best_practices": [
+  "example_form_outputs": [
     {
-      "practice": "审批超时设置",
-      "reason": "避免申请长时间挂起，提升用户体验",
-      "recommendation": "30 分钟（紧急情况）或 2 小时（非紧急）",
-      "avoid": "不设超时或超时时间过长（如 24 小时）"
-    },
-    {
-      "practice": "临时权限有效期",
-      "reason": "平衡安全性和便利性",
-      "recommendation": "默认 1 小时，由审批人根据实际情况调整",
-      "options": "提供 15 分钟、30 分钟、1 小时、2 小时、4 小时、当天有效等选项"
-    },
-    {
-      "practice": "申请理由可选而非必填",
-      "reason": "方便审批人判断，但不增加申请人负担",
-      "implementation": "提供占位符示例引导填写，但不强制"
-    },
-    {
-      "practice": "多渠道通知审批人",
-      "reason": "确保审批人及时收到通知",
-      "recommendation": "邮件 + 短信 + APP 推送（至少 2 种）"
-    },
-    {
-      "practice": "访问期间提醒",
-      "reason": "防止用户忘记权限到期时间",
-      "implementation": "页面顶部横幅 + 到期前 5 分钟弹窗"
-    },
-    {
-      "practice": "完整审计日志",
-      "reason": "合规要求和安全审计",
-      "record": "申请人、审批人、访问时间、操作内容、IP 地址",
-      "retention": "至少 90 天"
-    }
-  ],
-
-  "common_variations": {
-    "multi_level_approval": {
-      "scenario": "特别敏感的页面需要多级审批",
-      "example": "主管审批 → 部门经理审批 → BOSS 最终审批",
-      "config_hint": "在 approval_chain 中配置多个 level"
-    },
-    "conditional_approval": {
-      "scenario": "根据条件决定是否需要审批",
-      "example": "工作时间内直接访问，非工作时间需要审批",
-      "config_hint": "结合 time_restrictions 和 access_control"
-    },
-    "role_based_approver": {
-      "scenario": "根据申请人角色分配不同审批人",
-      "example": "运营专员 → 运营主管审批；财务助理 → 财务经理审批",
-      "config_hint": "在 user_scope 中配置多个规则"
-    }
-  },
-
-  "example_use_cases": [
-    {
-      "use_case": "运营专员访问账户详情页",
-      "configuration": {
-        "target": "美国站账户详情页",
-        "restricted_users": "运营专员",
-        "approver": "BOSS",
-        "duration_control": "审批人决定",
-        "reason_required": false,
-        "time_scope": "全天生效"
+      "use_case": "运营专员访问账户详情页需BOSS审批",
+      "form_output": {
+        "策略名称": "账户详情页BOSS审批",
+        "生效成员": "除BOSS外所有成员",
+        "生效平台账号": "所有账号",
+        "生效时段": {
+          "模式": "一直生效",
+          "生效日期": {"启用": false},
+          "生效周期": {"启用": false},
+          "生效时间": {"启用": false}
+        },
+        "访问策略描述": "运营专员访问美国站账户详情页需BOSS审批。该页面包含银行、税务等敏感信息，防止未授权访问导致信息泄露。",
+        "访问审批限制": {
+          "仅boss账号可审批": true,
+          "不允许申请访问": false
+        }
       },
-      "policy_file": "运营专员账户详情页审批策略.json"
-    },
-    {
-      "use_case": "普通员工访问支付报告",
-      "configuration": {
-        "target": "支付报告页面",
-        "restricted_users": "非财务人员",
-        "approver": "财务总监",
-        "duration_control": "固定 2 小时",
-        "reason_required": true,
-        "time_scope": "全天生效"
+      "tab_指定网页生效策略": [
+        {
+          "url_rule": "sellercentral.amazon.com/sw/AccountInfo*",
+          "mode": "可访问",
+          "说明": "美国站账户详情页（允许查看但限制操作）",
+          "behavior_controls": {
+            "复制": "限制且记录",
+            "文件上传": "限制且记录",
+            "文件下载": "限制且记录",
+            "打印": "限制且记录",
+            "鼠标点击": "允许",
+            "键盘输入": "限制",
+            "查看密码框": "限制"
+          }
+        }
+      ],
+      "tab_所有网页通用策略": {
+        "复制": "允许且记录",
+        "文件上传": "允许且记录",
+        "文件下载": "允许且记录",
+        "打印": "允许且记录",
+        "鼠标点击": "允许",
+        "键盘输入": "允许",
+        "查看密码框": "允许"
       }
     },
     {
-      "use_case": "实习生访问用户权限管理",
-      "configuration": {
-        "target": "用户权限管理页面",
-        "restricted_users": "实习生",
-        "approver": "IT 管理员",
-        "duration_control": "固定 30 分钟",
-        "reason_required": true,
-        "time_scope": "仅工作时间可申请"
+      "use_case": "买家号Checkout结账页完全屏蔽（17:30起）",
+      "form_output": {
+        "策略名称": "买家号Checkout下班屏蔽",
+        "生效成员": "除BOSS外所有成员",
+        "生效平台账号": "所有账号",
+        "生效时段": {
+          "模式": "指定时段生效",
+          "生效日期": {"启用": false},
+          "生效周期": {"启用": true, "选中": ["一", "二", "三", "四", "五", "六", "七"]},
+          "生效时间": {"启用": true, "开始时间": "17:30", "结束时间": "23:59"}
+        },
+        "访问策略描述": "每日17:30起屏蔽买家账号Checkout结账页。防止下班时段人员通过买家号下单导致资金损失或触发风控锁号。URL已截图验证。",
+        "访问审批限制": {
+          "仅boss账号可审批": true,
+          "不允许申请访问": true
+        }
+      },
+      "tab_指定网页生效策略": [
+        {"url_rule": "www.amazon.com/checkout/*", "mode": "已限制", "说明": "Secure Checkout结账页（已验证）"},
+        {"url_rule": "www.amazon.com/gp/cart/*",  "mode": "已限制", "说明": "购物车页面"},
+        {"url_rule": "www.amazon.com/gp/buy/spc*", "mode": "已限制", "说明": "旧版结账页（兜底）"}
+      ],
+      "tab_所有网页通用策略": {
+        "复制": "允许且记录",
+        "文件上传": "允许且记录",
+        "文件下载": "允许且记录",
+        "打印": "允许且记录",
+        "鼠标点击": "允许",
+        "键盘输入": "允许",
+        "查看密码框": "限制"
       }
     }
   ],
 
   "related_skills": {
-    "blacklist_skill": "完全禁止访问特定页面（不允许申请）",
-    "readonly_skill": "只读模式访问控制（可查看不可修改）",
-    "time_based_skill": "基于时间的访问限制（特定时段禁止）",
-    "whitelist_skill": "白名单模式（仅特定人员可访问）"
+    "main_skill": "access_policy_skill_package/skill_definition.json（主技能定义，包含平台能力边界和完整对话流程）",
+    "presets": "access_policy_skill_package/presets.json（URL预设、时段预设、浏览器控制预设）",
+    "config_template": "access_policy_skill_package/config_template.json（表单字段模板）"
   }
 }

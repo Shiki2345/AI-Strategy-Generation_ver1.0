@@ -1,49 +1,184 @@
 {
-  "policy_name": "{{POLICY_NAME}}",
-  "policy_type": "time_based_blacklist",
-  "description": "{{DESCRIPTION}}",
-  "version": "1.0",
-  "created_at": "{{TIMESTAMP}}",
-  
-  "time_restrictions": {
-    "enabled": true,
-    "schedule": {
-      "days_of_week": "{{DAYS_OF_WEEK}}",
-      "time_range": {
-        "start": "{{START_TIME}}",
-        "end": "{{END_TIME}}"
+  "_template_meta": {
+    "version": "2.1",
+    "description": "严格对齐平台「新增访问策略」表单字段的输出模板，生成结果可直接用于表单填写",
+    "updated_at": "2026-04-13",
+    "change_log": "v2.0 重构为平台表单字段映射；v2.1 修正指定网页策略的URL模式和操作行为选项，新增鼠标点击/键盘输入控制项"
+  },
+
+  "form_fields": {
+    "策略名称": {
+      "field_id": "policy_name",
+      "type": "text",
+      "max_length": 24,
+      "required": true,
+      "value": "{{POLICY_NAME}}",
+      "hint": "不超过24个字符，简明扼要描述策略用途"
+    },
+
+    "生效成员": {
+      "field_id": "effective_members",
+      "type": "selector",
+      "required": true,
+      "value": "{{EFFECTIVE_MEMBERS}}",
+      "options": [
+        "所有成员",
+        "除BOSS外所有成员",
+        "指定成员"
+      ],
+      "custom_members": "{{CUSTOM_MEMBERS_IF_SPECIFIED}}"
+    },
+
+    "生效平台账号": {
+      "field_id": "effective_accounts",
+      "type": "selector",
+      "required": true,
+      "value": "{{EFFECTIVE_ACCOUNTS}}",
+      "options": [
+        "所有账号",
+        "指定账号"
+      ],
+      "custom_accounts": "{{CUSTOM_ACCOUNTS_IF_SPECIFIED}}"
+    },
+
+    "生效时段": {
+      "field_id": "effective_period",
+      "type": "compound",
+      "required": true,
+      "mode": "{{PERIOD_MODE}}",
+      "mode_options": ["一直生效", "指定时段生效"],
+
+      "生效日期": {
+        "field_id": "effective_date_range",
+        "type": "date_range",
+        "enabled": "{{DATE_RANGE_ENABLED}}",
+        "start_date": "{{START_DATE}}",
+        "end_date": "{{END_DATE}}"
       },
-      "timezone": "{{TIMEZONE}}"
+
+      "生效周期": {
+        "field_id": "effective_weekdays",
+        "type": "weekday_selector",
+        "enabled": "{{WEEKDAYS_ENABLED}}",
+        "selected_days": "{{SELECTED_DAYS}}",
+        "day_options": ["一", "二", "三", "四", "五", "六", "七"]
+      },
+
+      "生效时间": {
+        "field_id": "effective_time_range",
+        "type": "time_range",
+        "enabled": "{{TIME_RANGE_ENABLED}}",
+        "start_time": "{{START_TIME}}",
+        "end_time": "{{END_TIME}}"
+      }
+    },
+
+    "访问策略描述": {
+      "field_id": "policy_description",
+      "type": "textarea",
+      "max_length": 400,
+      "required": false,
+      "value": "{{POLICY_DESCRIPTION}}"
+    },
+
+    "访问审批限制": {
+      "field_id": "approval_restrictions",
+      "type": "checkbox_group",
+      "options": {
+        "仅boss账号可审批": "{{BOSS_ONLY_APPROVAL}}",
+        "不允许申请访问": "{{DENY_ACCESS_REQUEST}}"
+      }
     }
   },
-  
-  "blacklist": {
-    "domains": "{{BLOCKED_DOMAINS}}",
-    "match_type": "{{MATCH_TYPE}}",
-    "block_action": "deny_with_message",
-    "block_message": "{{BLOCK_MESSAGE}}"
-  },
-  
-  "user_scope": {
-    "apply_to": "{{APPLY_TO}}",
-    "exceptions": {
-      "roles": "{{EXCEPTION_ROLES}}",
-      "users": "{{EXCEPTION_USERS}}",
-      "groups": "{{EXCEPTION_GROUPS}}",
-      "description": "{{EXCEPTION_DESCRIPTION}}"
+
+  "tab_指定网页生效策略": {
+    "field_id": "specific_page_rules",
+    "description": "添加网页URL后，每条URL可设置为「可访问」或「已限制」两种模式",
+    "type": "url_rule_list",
+    "rule_template": {
+      "url": "{{URL_PATTERN}}",
+      "mode": "{{ACCESS_MODE}}",
+      "mode_options": ["可访问", "已限制"],
+      "mode_description": {
+        "可访问": "允许打开该页面，但可对页面内的操作行为进行细粒度控制（见下方 behavior_controls）",
+        "已限制": "完全禁止打开该页面"
+      },
+      "behavior_controls": {
+        "_applies_when": "mode = 可访问",
+        "_description": "仅在「可访问」模式下可配置，「已限制」模式下无需配置",
+
+        "复制": {
+          "value": "{{COPY_CONTROL}}",
+          "options": ["允许", "允许且记录", "限制且记录"],
+          "description": "若限制复制，将无法复制账号环境内的信息"
+        },
+        "文件上传": {
+          "value": "{{UPLOAD_CONTROL}}",
+          "options": ["允许", "允许且记录", "限制且记录"],
+          "description": "若限制文件上传，将无法在账号环境下执行文件上传操作"
+        },
+        "文件下载": {
+          "value": "{{DOWNLOAD_CONTROL}}",
+          "options": ["允许", "允许且记录", "限制且记录"],
+          "description": "若限制文件下载，将无法在账号环境下执行文件下载操作"
+        },
+        "打印": {
+          "value": "{{PRINT_CONTROL}}",
+          "options": ["允许", "允许且记录", "限制且记录"],
+          "description": "若限制打印，将无法在账号环境下执行打印操作"
+        },
+        "鼠标点击": {
+          "value": "{{MOUSE_CLICK_CONTROL}}",
+          "options": ["允许", "限制"],
+          "description": "若限制鼠标点击，将无法在账号环境下执行点击操作，仅可查看页面"
+        },
+        "键盘输入": {
+          "value": "{{KEYBOARD_INPUT_CONTROL}}",
+          "options": ["允许", "限制"],
+          "description": "若限制键盘输入，将无法在网页内的输入框执行输入操作"
+        },
+        "查看密码框": {
+          "value": "{{PASSWORD_VIEW_CONTROL}}",
+          "options": ["允许", "限制"],
+          "description": "若限制查看密码框，生效的成员将无法在账号环境下查看密码框的明文，如无法查看「密码」、「密钥」等机密信息"
+        }
+      }
     }
   },
-  
-  "enforcement": {
-    "strict_mode": true,
-    "log_violations": true,
-    "notify_admin": false,
-    "allow_override": false
-  },
-  
-  "metadata": {
-    "created_by": "Access Policy Assistant",
-    "last_modified": "{{TIMESTAMP}}",
-    "tags": "{{TAGS}}"
+
+  "tab_所有网页通用策略": {
+    "field_id": "global_page_rules",
+    "description": "对账号环境内所有网页生效的操作行为规则",
+    "type": "behavior_control",
+    "controls": {
+      "复制": {
+        "value": "{{COPY_CONTROL}}",
+        "options": ["允许", "允许且记录", "限制且记录"]
+      },
+      "文件上传": {
+        "value": "{{UPLOAD_CONTROL}}",
+        "options": ["允许", "允许且记录", "限制且记录"]
+      },
+      "文件下载": {
+        "value": "{{DOWNLOAD_CONTROL}}",
+        "options": ["允许", "允许且记录", "限制且记录"]
+      },
+      "打印": {
+        "value": "{{PRINT_CONTROL}}",
+        "options": ["允许", "允许且记录", "限制且记录"]
+      },
+      "鼠标点击": {
+        "value": "{{MOUSE_CLICK_CONTROL}}",
+        "options": ["允许", "限制"]
+      },
+      "键盘输入": {
+        "value": "{{KEYBOARD_INPUT_CONTROL}}",
+        "options": ["允许", "限制"]
+      },
+      "查看密码框": {
+        "value": "{{PASSWORD_VIEW_CONTROL}}",
+        "options": ["允许", "限制"]
+      }
+    }
   }
 }
