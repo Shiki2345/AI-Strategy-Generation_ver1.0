@@ -46,12 +46,28 @@
         "examples": ["仅boss可审批", "完全禁止申请访问"]
       }
     ],
-    "not_supported": [
+    "conditionally_supported": [
       {
-        "capability": "数据库行级别记录过滤",
-        "description": "按数据创建者/所有者动态过滤记录（如：只看自己创建的Case）",
-        "alternative": "在业务系统后端/数据库层实现 Row-Level Security"
-      },
+        "capability": "数据隔离（某组的数据别人不能看）",
+        "condition": "该组是否使用独立的平台账号",
+        "when_independent_account": {
+          "supported": true,
+          "method": "在该组的独立账号上屏蔽目标页面，生效成员设为'除该组外所有人'。页面级屏蔽 = 间接数据隔离。",
+          "form_mapping": {
+            "生效平台账号": "指定账号：该组的独立账号",
+            "生效成员": "指定成员：除该组外所有人",
+            "tab_指定网页生效策略": "屏蔽目标页面URL"
+          }
+        },
+        "when_shared_account": {
+          "supported": false,
+          "reason": "所有人在同一账号下打开同一页面看到相同数据，平台无法按创建者过滤数据行",
+          "alternative": "在业务系统后端/数据库层实现 Row-Level Security"
+        },
+        "phase_1_action": "不要直接判为不支持，先询问用户的账号结构（独立账号还是共用账号），再决定走哪条路径"
+      }
+    ],
+    "not_supported": [
       {
         "capability": "业务系统字段级权限",
         "description": "控制某个字段是否可见/可编辑（如：隐藏价格列）",
@@ -93,8 +109,11 @@
       "scene": "数据记录级隔离",
       "description": "某组只能看自己创建的数据，其他组看不到",
       "keywords": ["只能看自己的", "别人不能看", "数据隔离", "记录过滤"],
-      "supported": false,
-      "redirect": "告知用户此需求超出平台能力，建议在业务系统后端实现"
+      "supported": "conditional",
+      "condition": "该组是否使用独立平台账号",
+      "when_yes": "有独立账号 → 可通过「指定账号 + 指定成员排除」组合实现页面级屏蔽，间接达到数据隔离效果",
+      "when_no": "共用账号 → 平台无法实现，需在业务系统后端做行级过滤",
+      "phase_1_action": "先询问账号结构，再判断是否支持"
     }
   ],
 
@@ -111,6 +130,13 @@
         "on_supported": {
           "response_template": "明白了！你的需求可以通过平台的访问策略实现。",
           "action": "进入 phase_2_collect_params"
+        },
+        "on_conditionally_supported": {
+          "response_template": "这个需求能不能通过平台实现，取决于你们的账号结构。",
+          "action": "先询问条件（如：该组是否有独立平台账号），根据回答决定走 supported 路径还是 not_supported 路径",
+          "key_question": "该组/该业务是否使用独立的平台账号？",
+          "if_yes": "可以实现 → 进入 phase_2_collect_params，用「指定账号 + 指定成员排除」组合",
+          "if_no": "无法实现 → 告知用户并给出替代方案"
         },
         "on_not_supported": {
           "response_template": "这个需求超出了平台访问策略的能力范围。{{platform_capability.not_supported[matched].description}}。建议的替代方案：{{platform_capability.not_supported[matched].alternative}}",
@@ -134,9 +160,33 @@
         {
           "field_name": "effective_members",
           "maps_to_form": "生效成员",
-          "question": "这个策略对哪些人生效？",
+          "question": "这个策略对哪些人生效？（注意：生效成员 = 被限制的人，不是被保护的人）",
           "options": ["所有成员", "除BOSS外所有成员", "指定成员"],
-          "default": "除BOSS外所有成员"
+          "default": "除BOSS外所有成员",
+          "指定成员_detail": {
+            "description": "指定成员弹窗有三个 tab：成员、部门、角色",
+            "tabs": {
+              "成员": "按具体人名选择，适用于限制个别人",
+              "部门": "按部门/组选择，部门下所有成员生效，后续加入该部门的成员自动生效",
+              "角色": "按角色选择（如运营专员、财务主管），该角色下所有成员生效，后续加入该角色的成员自动生效"
+            },
+            "inverse_selection_pattern": {
+              "description": "当需求是'保护某组数据不被其他人看到'时，被限制的对象是'其他人'而非'该组'",
+              "operation": "在部门tab中，选中除目标组以外的所有部门",
+              "example": {
+                "user_request": "6组的case别人不能看",
+                "被保护的人": "6组（要正常访问，不能被限制）",
+                "被限制的人": "除6组以外的所有部门",
+                "platform_operation": "指定成员 → 部门tab → 选中除「6组」外的所有部门 → 确定",
+                "form_output_value": "指定成员 → 部门tab → 选中除「6组」外的所有部门"
+              }
+            },
+            "name_matching": {
+              "description": "当用户提到组名/部门名/角色名时，尝试匹配平台中的实际名称",
+              "on_match": "直接确认：'请问要对XX这个部门生效吗？'",
+              "on_no_match": "让用户确认：'平台的部门/角色列表里没有找到完全匹配的名称，请确认具体是哪个？'"
+            }
+          }
         },
         {
           "field_name": "effective_accounts",

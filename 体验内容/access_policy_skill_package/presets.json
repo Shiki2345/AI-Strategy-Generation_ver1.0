@@ -119,10 +119,32 @@
       "name": "除BOSS外所有成员",
       "value": "除BOSS外所有成员"
     },
-    "specified": {
-      "name": "指定成员",
+    "specified_by_member": {
+      "name": "指定成员（按人名）",
       "value": "指定成员",
-      "note": "需在平台中手动选择具体成员"
+      "tab": "成员",
+      "note": "在成员tab中按具体人名勾选"
+    },
+    "specified_by_department": {
+      "name": "指定成员（按部门/组）",
+      "value": "指定成员",
+      "tab": "部门",
+      "note": "在部门tab中勾选目标部门，部门下所有成员自动生效，后续新加入的成员也自动生效"
+    },
+    "specified_by_role": {
+      "name": "指定成员（按角色）",
+      "value": "指定成员",
+      "tab": "角色",
+      "available_roles": ["运营专员", "运营主管", "人事主管", "人事专员", "财务主管", "财务专员", "IT管理员", "IT专员", "超级管理员"],
+      "note": "在角色tab中勾选目标角色，该角色下所有成员自动生效"
+    },
+    "exclude_specific_department": {
+      "name": "排除某个部门（反选模式）",
+      "value": "指定成员",
+      "tab": "部门",
+      "operation": "选中除目标部门外的所有部门",
+      "use_case": "保护某组数据不被其他人看到时使用",
+      "example": "用户说'6组的case别人不能看' → 在部门tab选中除「6组」外的所有部门"
     }
   },
 
