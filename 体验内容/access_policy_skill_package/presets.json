@@ -115,6 +115,26 @@
         {"url_rule": "https://*.amazon.*/sw/AccountInfo*", "说明": "所有站点账户详情页（通配符覆盖）"}
       ],
       "tags": ["亚马逊", "账户", "敏感", "全站点"]
+    },
+
+    "amazon_seller_settings": {
+      "name": "亚马逊设置菜单全部子页面（全站点）",
+      "description": "对应 Seller Central 右上角设置菜单的全部12个子项，当用户说「屏蔽设置下所有页面」时引用此预设",
+      "rules": [
+        {"url_rule": "https://*.amazon.*/global-dashboard", "说明": "账户信息（设置总入口及全部子页面）"},
+        {"url_rule": "https://*.amazon.*/account/management", "说明": "管理账户（全球多站点账户关联）"},
+        {"url_rule": "https://*.amazon.*/notifications/preferences", "说明": "通知首选项（邮件/短信/推送设置）"},
+        {"url_rule": "https://*.amazon.*/ap/cnep", "说明": "登录设置（修改密码、更改邮箱、登录安全）"},
+        {"url_rule": "https://*.amazon.*/gp/returns/settings", "说明": "退货设置（退货地址、退货规则）"},
+        {"url_rule": "https://*.amazon.*/gcx/gift-options", "说明": "礼品选项（礼品包装和礼品消息）"},
+        {"url_rule": "https://*.amazon.*/sbr", "说明": "配送设置（运费模板、配送时效、物流方式）"},
+        {"url_rule": "https://*.amazon.*/tax", "说明": "税务设置（税务总面板及全部子页面）"},
+        {"url_rule": "https://*.amazon.*/gp/account-manager/home.html", "说明": "用户权限（子用户权限管理）"},
+        {"url_rule": "https://*.amazon.*/gp/help-content/home.html", "说明": "您的信息和政策（帮助文档和操作指南）"},
+        {"url_rule": "https://*.amazon.*/fba/settings*", "说明": "亚马逊物流（FBA物流设置）"},
+        {"url_rule": "https://*.amazon.*/sw/AccountInfo*", "说明": "卖家信息（卖家档案/资料编辑）"}
+      ],
+      "tags": ["亚马逊", "设置", "Settings", "设置菜单", "全站点"]
     }
   },
 
