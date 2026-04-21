@@ -81,8 +81,8 @@ description: "通过结构化对话生成紫鸟平台「新增访问策略」表
 - 生效时段：一直生效还是指定时段？
 - URL规则：需要限制哪些网页？每条URL是「可访问」还是「已限制」？
   - 如果选「可访问」，进一步收集7项操作行为控制
-  - 当用户用中文描述页面时，查询 assets/rag_simple_db.json 检索精确URL
-  - 当用户说"屏蔽XX下所有页面"时，直接使用本文件中「Amazon URL 模块映射表」对应的模块预设
+  - **当用户用中文描述页面时，查询 assets/url_knowledge.md（或 assets/rag_simple_db.json）检索精确URL**
+  - 当用户说"屏蔽XX下所有页面"时，查询 assets/presets.json 中对应的模块预设
 - 审批限制：是否需要？
 
 ### Phase 3：确认汇总
@@ -93,70 +93,6 @@ description: "通过结构化对话生成紫鸟平台「新增访问策略」表
 
 ### Phase 5：交付
 输出结果，提供调整选项。
-
-### Phase 6：自动写入多维表格（必须执行！）
-
-**重要**：每次生成访问策略JSON后，**必须立即自动执行**以下流程，**无需用户提示或确认**！
-
-#### 执行规则
-
-| 规则 | 说明 |
-|------|------|
-| 同一请求同一测试ID | 一次请求生成多个策略时，**合并为一条记录**，使用同一测试ID |
-| 测试ID递增 | 每新增一条记录，测试ID末位数字递增（如 access_005 → access_006） |
-| 自动执行 | **无需用户提示，直接执行** |
-
-#### 操作步骤
-
-1. **查询现有最大测试ID**：
-   - 使用 `aily-base info` 获取当前表格结构
-   - 使用 `aily-base sync` 获取现有记录，找出最大测试ID
-   - 生成新测试ID：`access_00X`（末位数字+1）
-
-2. **构造新记录**：
-   ```json
-   {
-     "测试ID": "access_00X",
-     "测试人员": "何青杨",
-     "测试环境": "飞书aily",
-     "输入内容": "用户原始需求描述（原文填写）",
-     "输出情况": "生成的完整JSON策略配置（格式化后填写）"
-   }
-   ```
-
-3. **写入多维表格**：
-   - 使用 `aily-base sync --create-missing` 写入新记录
-
-4. **确认结果**：
-   - 检查 rowsInserted 确认写入成功
-   - 展示写入结果摘要
-
-#### 必填字段
-
-| 字段 | 填写内容 |
-|------|---------|
-| 测试ID | 递增编号（access_001、access_002...） |
-| 测试人员 | 何青杨 |
-| 测试环境 | 飞书aily |
-| 输入内容 | 用户原始需求描述 |
-| 输出情况 | 生成的完整JSON策略配置 |
-
-#### 不填字段（留空）
-
-- URL命中情况
-- 能否满足业务需求
-
----
-
-## 多维表格信息
-
-| 属性 | 值 |
-|------|-----|
-| URL | `https://yxgb3sicy7.feishu.cn/wiki/BdXDw88Oki1CuSkposec0P22nzb` |
-| 表格名 | 数据表 |
-| 表ID | `tblXWRiJbaJjNPdu` |
-
----
 
 ## 表单字段规范
 
@@ -209,102 +145,11 @@ description: "通过结构化对话生成紫鸟平台「新增访问策略」表
    - 不勾选"保留完整参数"：?后内容自动删除，匹配整类页面
    - 勾选"保留完整参数"：URL必须一个字符都不差才能生效，用于精准控制特定页面
 
-5. **末尾绝对不能是 `*`**（最高频错误，独立规则，优先级高于其他）
+## 输出格式
 
-   **核心原理**：紫鸟平台的 URL 匹配**默认就是前缀匹配 + 自动去除 query 参数**。
-   - 写 `https://*.amazon.*/inventory` 会自动匹配到：
-     - `https://a.amazon.com/inventory`
-     - `https://a.amazon.com/inventory/abc`
-     - `https://a.amazon.com/inventory?foo=bar`
-   - 所以**末尾永远不需要加 `*` 来表达"及其子页面"**——加了反而平台不识别。
+输出 JSON，字段名与平台表单标签完全一致。示例：
 
-   **硬规则**：`url_rule` 字符串的**最后一个字符**不能是 `*`，无论前面是路径、斜杠、点号还是其他任何字符。
-
-   **修正对照表（模型最常犯的错，照表修）**：
-
-   | 错误写法 | 正确写法 | 说明 |
-   |---|---|---|
-   | `https://*.amazon.*/product-search*` | `https://*.amazon.*/product-search` | 路径后的 `*` 直接删除 |
-   | `https://*.amazon.*/listing/upload*` | `https://*.amazon.*/listing/upload` | 多层路径同样删除末尾 `*` |
-   | `https://*.amazon.*/abis/listing/edit*` | `https://*.amazon.*/abis/listing/edit` | 同上 |
-   | `https://www.amazon.*/*` | `https://www.amazon[^/]*/$` | 整个域名所有子页面用 `[^/]*/$` |
-   | `https://*.amazon.*` | 逐条列具体路径 或 `https://*.amazon[^/]*/$` | 无法用一条裸 `*` 覆盖所有亚马逊页面 |
-   | `https://*.amazon.com/*` | `https://*.amazon.com/` 或 `https://*.amazon.com[^/]*/$` | 末尾 `/*` 冗余 |
-
-   **✅ 允许的末尾字符**：字母 / 数字 / `-` / `_` / `/` / `$` / `.` / `]*` 后跟 `$`（即 `[^/]*/$` 结构）
-
-   **❌ 禁止的末尾字符**：`*`（包括 `/*`、`.*`、`路径*` 等一切以 `*` 收尾的形式）
-
-   **自检方法**：输出每条 `url_rule` 前，看字符串最后一个字符——如果是 `*`，直接删除；如果删除后变成 `/`，再判断是否需要保留"目录"语义（保留则 OK，如 `https://www.amazon.com/checkout/`；不需要则也删掉）。
-
-## 输出契约（硬约束，优先级高于其他章节）
-
-### 基本规则
-1. 只输出一个顶层 JSON 对象，**前后不得**有任何解释文字、markdown 代码栅栏（```）、emoji、注释、寒暄
-2. 字段名、枚举值使用中文原文，大小写与空格一字不差
-3. 字段顺序严格按本节模板；分支未启用时也要输出占位结构（如 `{"启用": false}`），不得省略键
-4. **所有 `url_rule` 字符串的最后一个字符不得是 `*`**，无论前面是什么（参见 URL语法规则第 5 条的修正对照表）
-
-### 顶层结构（恰好 3 个键，按此顺序）
-```
-{
-  "form_output": { ... },
-  "tab_指定网页生效策略": [ ... ],
-  "tab_所有网页通用策略": { ... }
-}
-```
-
-### form_output（6 个键，按此顺序）
-- `策略名称`：string，≤24 字符
-- `生效成员`：string，按枚举格式
-- `生效平台账号`：string，按枚举格式
-- `生效时段`：object，按下方"生效时段分支"
-- `访问策略描述`：string，≤400 字符
-- `访问审批限制`：object，两个布尔键
-
-### 生效时段分支
-- 模式 = `一直生效`（三子项全部禁用）：
-  ```
-  {"模式": "一直生效",
-   "生效日期": {"启用": false},
-   "生效周期": {"启用": false},
-   "生效时间": {"启用": false}}
-  ```
-- 模式 = `指定时段生效`（启用的子项带完整字段，未启用子项仅带 `{"启用": false}`）：
-  ```
-  {"模式": "指定时段生效",
-   "生效日期": {"启用": true, "开始日期": "YYYY-MM-DD", "结束日期": "YYYY-MM-DD"},
-   "生效周期": {"启用": true, "选中": ["一","二","三","四","五"]},
-   "生效时间": {"启用": true, "开始时间": "HH:MM", "结束时间": "HH:MM"}}
-  ```
-
-### URL 规则项分支（`tab_指定网页生效策略` 数组元素）
-- `mode = "已限制"`：**禁止**出现 `behavior_controls` 字段
-  ```
-  {"url_rule": "...", "mode": "已限制", "说明": "..."}
-  ```
-- `mode = "可访问"`：必须包含 `behavior_controls`，且 7 个键齐全
-  ```
-  {"url_rule": "...", "mode": "可访问", "说明": "...",
-   "behavior_controls": {
-     "复制": "...", "文件上传": "...", "文件下载": "...", "打印": "...",
-     "鼠标点击": "...", "键盘输入": "...", "查看密码框": "..."
-   }}
-  ```
-
-### 枚举值（只允许以下字面量，大小写符号一字不差）
-| 字段 | 允许值 |
-|---|---|
-| 生效成员 | `所有成员` / `除BOSS外所有成员` / `指定成员 → 成员tab → …` / `指定成员 → 部门tab → …` / `指定成员 → 角色tab → …` |
-| 生效平台账号 | `所有账号` / `指定账号：<账号名>` |
-| 模式 | `一直生效` / `指定时段生效` |
-| mode | `可访问` / `已限制` |
-| 复制/文件上传/文件下载/打印 | `允许` / `允许且记录` / `限制且记录` |
-| 鼠标点击/键盘输入/查看密码框 | `允许` / `限制` |
-| 审批布尔 | `true` / `false`（不加引号） |
-
-### 示例输出（完整样例，供比对）
-```
+```json
 {
   "form_output": {
     "策略名称": "客服人员权限限制",
@@ -312,9 +157,9 @@ description: "通过结构化对话生成紫鸟平台「新增访问策略」表
     "生效平台账号": "所有账号",
     "生效时段": {
       "模式": "一直生效",
-      "生效日期": {"启用": false},
-      "生效周期": {"启用": false},
-      "生效时间": {"启用": false}
+      "生效日期": { "启用": false },
+      "生效周期": { "启用": false },
+      "生效时间": { "启用": false }
     },
     "访问策略描述": "客服人员可访问买家消息和订单页（只读），其余模块全部屏蔽。",
     "访问审批限制": {
@@ -323,12 +168,14 @@ description: "通过结构化对话生成紫鸟平台「新增访问策略」表
     }
   },
   "tab_指定网页生效策略": [
-    {"url_rule": "https://*.amazon.*/orders-v3", "mode": "可访问", "说明": "订单页（只读）",
-     "behavior_controls": {
-       "复制": "限制且记录", "文件上传": "限制且记录", "文件下载": "限制且记录", "打印": "限制且记录",
-       "鼠标点击": "限制", "键盘输入": "限制", "查看密码框": "限制"
-     }},
-    {"url_rule": "https://*.amazon.*/inventory", "mode": "已限制", "说明": "库存管理"}
+    { "url_rule": "https://*.amazon.*/orders-v3*", "mode": "可访问", "说明": "订单页（只读）",
+      "behavior_controls": {
+        "复制": "限制且记录", "文件上传": "限制且记录", "文件下载": "限制且记录", "打印": "限制且记录",
+        "鼠标点击": "限制", "键盘输入": "限制", "查看密码框": "限制"
+      }
+    },
+    { "url_rule": "https://*.amazon.*/inventory*", "mode": "已限制", "说明": "库存管理" },
+    { "url_rule": "https://*.amazon.*/advertising/*", "mode": "已限制", "说明": "广告板块" }
   ],
   "tab_所有网页通用策略": {
     "复制": "允许且记录", "文件上传": "允许且记录", "文件下载": "允许且记录", "打印": "允许且记录",
@@ -336,20 +183,6 @@ description: "通过结构化对话生成紫鸟平台「新增访问策略」表
   }
 }
 ```
-
-### 输出前自检（心里过一遍，任一不通过则修正后再输出）
-- [ ] 顶层恰好 3 个键，顺序为 `form_output` → `tab_指定网页生效策略` → `tab_所有网页通用策略`
-- [ ] form_output 恰好 6 个键，顺序正确
-- [ ] 每条 `url_rule` 以 `https://` 开头
-- [ ] **每条 `url_rule` 的最后一个字符（字符串尾字符）不是 `*`**——这是最容易违规的一项，必须逐条检查
-- [ ] 逐条验证：如果 `url_rule` 末尾是 `*`，删除该 `*`；如果删除后末尾变成 `/*`，继续删到非 `*` 字符
-- [ ] 没有 `/*` 结尾的 URL（如 `https://www.amazon.*/*` 必须改写）
-- [ ] 每条 `mode=可访问` 的条目 `behavior_controls` 7 个键齐全
-- [ ] 每条 `mode=已限制` 的条目**没有** `behavior_controls` 字段
-- [ ] 生效时段三个子项（生效日期/生效周期/生效时间）的 `启用` 字段都存在
-- [ ] 所有枚举值与枚举表字面量一字不差
-- [ ] 策略名称 ≤24 字符，访问策略描述 ≤400 字符
-- [ ] JSON 前后没有任何其他文字、代码栅栏、说明
 
 ## Amazon URL 模块映射表
 
@@ -359,18 +192,18 @@ description: "通过结构化对话生成紫鸟平台「新增访问策略」表
 
 | 模块 | URL 通配符 | 说明 |
 |------|----------|------|
-| 账户/用户权限管理 | `https://*.amazon.*/sw/AccountInfo` | 账户详情/设置页 |
-| | `https://*.amazon.*/user-manager` | 用户权限管理 |
-| 商品管理(Inventory) | `https://*.amazon.*/inventory` | 库存管理 |
-| | `https://*.amazon.*/product-search` | 产品上架 |
-| 广告 | `https://*.amazon.*/advertising` | Seller Central广告板块 |
-| | `https://advertising.amazon.com` | 广告独立控制台 |
-| 买家消息(Communication) | `https://*.amazon.*/messaging/inbox` | 买家消息 |
-| 订单(Orders) | `https://*.amazon.*/orders-v3` | 订单管理 |
-| 财务/资金 | `https://*.amazon.*/payments` | 资金管理/支付报告 |
-| | `https://*.amazon.*/gp/payments-account` | 结算汇总/财务报表 |
-| 业务报告 | `https://*.amazon.*/business-reports` | 业务报告 |
-| 发货计划(Shipment Plan) | `https://*.amazon.*/fba/sendtoamazon` | FBA发货计划 |
+| 账户/用户权限管理 | `https://*.amazon.*/sw/AccountInfo*` | 账户详情/设置页 |
+| | `https://*.amazon.*/user-manager*` | 用户权限管理 |
+| 商品管理(Inventory) | `https://*.amazon.*/inventory*` | 库存管理 |
+| | `https://*.amazon.*/product-search*` | 产品上架 |
+| 广告 | `https://*.amazon.*/advertising/*` | Seller Central广告板块 |
+| | `https://advertising.amazon.com/*` | 广告独立控制台 |
+| 买家消息(Communication) | `https://*.amazon.*/messaging/inbox*` | 买家消息 |
+| 订单(Orders) | `https://*.amazon.*/orders-v3*` | 订单管理 |
+| 财务/资金 | `https://*.amazon.*/payments*` | 资金管理/支付报告 |
+| | `https://*.amazon.*/gp/payments-account/*` | 结算汇总/财务报表 |
+| 业务报告 | `https://*.amazon.*/business-reports*` | 业务报告 |
+| 发货计划(Shipment Plan) | `https://*.amazon.*/fba/sendtoamazon*` | FBA发货计划 |
 
 ### 设置菜单（全部12个子页面）
 
@@ -388,8 +221,8 @@ description: "通过结构化对话生成紫鸟平台「新增访问策略」表
 | 税务设置 | `https://*.amazon.*/tax` |
 | 用户权限 | `https://*.amazon.*/gp/account-manager/home.html` |
 | 您的信息和政策 | `https://*.amazon.*/gp/help-content/home.html` |
-| 亚马逊物流 | `https://*.amazon.*/fba/settings` |
-| 卖家信息 | `https://*.amazon.*/sw/AccountInfo` |
+| 亚马逊物流 | `https://*.amazon.*/fba/settings*` |
+| 卖家信息 | `https://*.amazon.*/sw/AccountInfo*` |
 
 ### 买家号结账页面
 
@@ -407,7 +240,7 @@ description: "通过结构化对话生成紫鸟平台「新增访问策略」表
 
 | 页面 | URL 通配符 |
 |------|----------|
-| 付款/结算页面 | `https://*.amazon.*/payments` |
+| 付款/结算页面 | `https://*.amazon.*/payments*` |
 | 银行账户页面 | `https://*.amazon.*/sw/AccountInfo/DepositMethod` |
 | 付款信息汇总 | `https://*.amazon.*/global-dashboard/payment-information` |
 | 卖家钱包新版 | `https://*.amazon.*/mario/sellerwallet/` |
@@ -462,5 +295,7 @@ description: "通过结构化对话生成紫鸟平台「新增访问策略」表
 
 ## 数据文件
 
-- **URL知识库**：assets/rag_simple_db.json - 219条Amazon页面URL，每条含中文描述、别名、关键词，用于将用户口语描述匹配到精确URL
-- **角色策略模板**：assets/role_templates.json - 6种角色（运营总监、产品专员、广告专员、客服、财务、仓储物流）的完整策略模板，可直接输出
+- **URL知识库（Markdown版，推荐）**：assets/url_knowledge.md - 219 条 Amazon 页面 URL，按分类组织，含中文描述、别名、关键词，用于将用户口语描述匹配到精确 URL
+- **URL知识库（JSON版，原始数据）**：assets/rag_simple_db.json - 同内容的结构化数据，含 marketplace、category 等字段
+- **预设值库**：assets/presets.json - URL 预设（10 组）、时段预设（5 个）、成员预设（6 个）、浏览器控制预设（4 个）、审批预设（3 个）
+- **角色策略模板**：assets/role_templates.json - 6 种角色（运营总监、产品专员、广告专员、客服、财务、仓储物流）的完整策略模板，可直接输出

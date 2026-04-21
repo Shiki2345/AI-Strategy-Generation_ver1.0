@@ -1,0 +1,273 @@
+{
+  "preset_version": "2.0",
+  "description": "预设值库，格式对齐平台表单字段选项",
+
+  "_url_format_note": "所有URL必须以 https:// 开头。亚马逊跨站点页面优先用 https://*.amazon.*/路径 通配符写法。",
+
+  "url_presets": {
+    "video_sites_cn": {
+      "name": "国内主流视频网站",
+      "rules": [
+        {"url_rule": "https://*.bilibili.com", "说明": "B站"},
+        {"url_rule": "https://*.iqiyi.com", "说明": "爱奇艺"},
+        {"url_rule": "https://*.youku.com", "说明": "优酷"},
+        {"url_rule": "https://*.v.qq.com", "说明": "腾讯视频（精确匹配，不影响QQ邮箱）"},
+        {"url_rule": "https://*.mgtv.com", "说明": "芒果TV"}
+      ],
+      "tags": ["视频", "娱乐", "国内"]
+    },
+
+    "video_sites_global": {
+      "name": "国际视频平台",
+      "rules": [
+        {"url_rule": "https://*.youtube.com", "说明": "YouTube"},
+        {"url_rule": "https://*.netflix.com", "说明": "Netflix"},
+        {"url_rule": "https://*.twitch.tv", "说明": "Twitch"},
+        {"url_rule": "https://*.vimeo.com", "说明": "Vimeo"}
+      ],
+      "tags": ["视频", "娱乐", "国际"]
+    },
+
+    "short_video": {
+      "name": "短视频平台",
+      "rules": [
+        {"url_rule": "https://*.douyin.com", "说明": "抖音"},
+        {"url_rule": "https://*.kuaishou.com", "说明": "快手"},
+        {"url_rule": "https://*.ixigua.com", "说明": "西瓜视频"}
+      ],
+      "tags": ["短视频", "娱乐"]
+    },
+
+    "social_media": {
+      "name": "社交媒体",
+      "rules": [
+        {"url_rule": "https://*.weibo.com", "说明": "微博"},
+        {"url_rule": "https://*.zhihu.com", "说明": "知乎"},
+        {"url_rule": "https://*.xiaohongshu.com", "说明": "小红书"},
+        {"url_rule": "https://*.facebook.com", "说明": "Facebook"},
+        {"url_rule": "https://*.twitter.com", "说明": "Twitter"},
+        {"url_rule": "https://*.instagram.com", "说明": "Instagram"}
+      ],
+      "tags": ["社交", "娱乐"]
+    },
+
+    "gaming": {
+      "name": "游戏平台",
+      "rules": [
+        {"url_rule": "https://*.4399.com", "说明": "4399小游戏"},
+        {"url_rule": "https://*.7k7k.com", "说明": "7k7k小游戏"},
+        {"url_rule": "https://*.steam.com", "说明": "Steam"},
+        {"url_rule": "https://*.epicgames.com", "说明": "Epic Games"}
+      ],
+      "tags": ["游戏", "娱乐"]
+    },
+
+    "shopping": {
+      "name": "购物网站",
+      "rules": [
+        {"url_rule": "https://*.taobao.com", "说明": "淘宝"},
+        {"url_rule": "https://*.tmall.com", "说明": "天猫"},
+        {"url_rule": "https://*.jd.com", "说明": "京东"},
+        {"url_rule": "https://*.pinduoduo.com", "说明": "拼多多"}
+      ],
+      "tags": ["购物", "电商"]
+    },
+
+    "amazon_seller_advertising": {
+      "name": "亚马逊广告相关页面（全站点）",
+      "rules": [
+        {"url_rule": "https://*.amazon.*/advertising", "说明": "所有站点Seller Central广告板块（通配符覆盖）"},
+        {"url_rule": "https://advertising.amazon.com", "说明": "Amazon Advertising独立广告控制台"}
+      ],
+      "tags": ["亚马逊", "广告", "全站点"]
+    },
+
+    "amazon_seller_payments": {
+      "name": "亚马逊金融/资金相关页面（全站点）",
+      "rules": [
+        {"url_rule": "https://*.amazon.*/payments", "说明": "所有站点资金管理/支付报告（通配符覆盖）"},
+        {"url_rule": "https://*.amazon.*/gp/payments-account", "说明": "所有站点结算汇总等财务报表"}
+      ],
+      "tags": ["亚马逊", "金融", "财务", "全站点"]
+    },
+
+    "amazon_seller_case": {
+      "name": "亚马逊Case工单页面（全站点）",
+      "rules": [
+        {"url_rule": "https://*.amazon.*/cu/case-lobby", "说明": "所有站点Case工单页（通配符覆盖）"}
+      ],
+      "tags": ["亚马逊", "Case", "工单", "全站点"]
+    },
+
+    "amazon_buyer_checkout": {
+      "name": "亚马逊买家号结账相关页面",
+      "rules": [
+        {"url_rule": "https://www.amazon.com/checkout", "说明": "Secure Checkout结账页（已验证）", "verified": true},
+        {"url_rule": "https://www.amazon.com/gp/cart", "说明": "购物车页面", "verified": "partial"},
+        {"url_rule": "https://www.amazon.com/gp/buy/spc", "说明": "旧版结账页（兜底）", "verified": false}
+      ],
+      "tags": ["亚马逊", "买家号", "结账", "高风险"]
+    },
+
+    "amazon_seller_account": {
+      "name": "亚马逊账户设置页面（全站点）",
+      "rules": [
+        {"url_rule": "https://*.amazon.*/sw/AccountInfo", "说明": "所有站点账户详情页（通配符覆盖）"}
+      ],
+      "tags": ["亚马逊", "账户", "敏感", "全站点"]
+    },
+
+    "amazon_seller_settings": {
+      "name": "亚马逊设置菜单全部子页面（全站点）",
+      "description": "对应 Seller Central 右上角设置菜单的全部12个子项，当用户说「屏蔽设置下所有页面」时引用此预设",
+      "rules": [
+        {"url_rule": "https://*.amazon.*/global-dashboard", "说明": "账户信息（设置总入口及全部子页面）"},
+        {"url_rule": "https://*.amazon.*/account/management", "说明": "管理账户（全球多站点账户关联）"},
+        {"url_rule": "https://*.amazon.*/notifications/preferences", "说明": "通知首选项（邮件/短信/推送设置）"},
+        {"url_rule": "https://*.amazon.*/ap/cnep", "说明": "登录设置（修改密码、更改邮箱、登录安全）"},
+        {"url_rule": "https://*.amazon.*/gp/returns/settings", "说明": "退货设置（退货地址、退货规则）"},
+        {"url_rule": "https://*.amazon.*/gcx/gift-options", "说明": "礼品选项（礼品包装和礼品消息）"},
+        {"url_rule": "https://*.amazon.*/sbr", "说明": "配送设置（运费模板、配送时效、物流方式）"},
+        {"url_rule": "https://*.amazon.*/tax", "说明": "税务设置（税务总面板及全部子页面）"},
+        {"url_rule": "https://*.amazon.*/gp/account-manager/home.html", "说明": "用户权限（子用户权限管理）"},
+        {"url_rule": "https://*.amazon.*/gp/help-content/home.html", "说明": "您的信息和政策（帮助文档和操作指南）"},
+        {"url_rule": "https://*.amazon.*/fba/settings", "说明": "亚马逊物流（FBA物流设置）"},
+        {"url_rule": "https://*.amazon.*/sw/AccountInfo", "说明": "卖家信息（卖家档案/资料编辑）"}
+      ],
+      "tags": ["亚马逊", "设置", "Settings", "设置菜单", "全站点"]
+    }
+  },
+
+  "period_presets": {
+    "standard_workday": {
+      "name": "标准工作日",
+      "生效周期": {"启用": true, "选中": ["一", "二", "三", "四", "五"]},
+      "生效时间": {"启用": true, "开始时间": "09:00", "结束时间": "18:00"}
+    },
+    "extended_workday": {
+      "name": "延长工作日（含周六）",
+      "生效周期": {"启用": true, "选中": ["一", "二", "三", "四", "五", "六"]},
+      "生效时间": {"启用": true, "开始时间": "08:30", "结束时间": "20:00"}
+    },
+    "all_day_everyday": {
+      "name": "全天全周",
+      "生效周期": {"启用": true, "选中": ["一", "二", "三", "四", "五", "六", "七"]},
+      "生效时间": {"启用": true, "开始时间": "00:00", "结束时间": "23:59"}
+    },
+    "after_work": {
+      "name": "下班后",
+      "生效周期": {"启用": true, "选中": ["一", "二", "三", "四", "五", "六", "七"]},
+      "生效时间": {"启用": true, "开始时间": "17:30", "结束时间": "23:59"}
+    },
+    "weekend_only": {
+      "name": "仅周末",
+      "生效周期": {"启用": true, "选中": ["六", "七"]},
+      "生效时间": {"启用": true, "开始时间": "00:00", "结束时间": "23:59"}
+    }
+  },
+
+  "member_presets": {
+    "all_members": {
+      "name": "所有成员",
+      "value": "所有成员"
+    },
+    "all_except_boss": {
+      "name": "除BOSS外所有成员",
+      "value": "除BOSS外所有成员"
+    },
+    "specified_by_member": {
+      "name": "指定成员（按人名）",
+      "value": "指定成员",
+      "tab": "成员",
+      "note": "在成员tab中按具体人名勾选"
+    },
+    "specified_by_department": {
+      "name": "指定成员（按部门/组）",
+      "value": "指定成员",
+      "tab": "部门",
+      "note": "在部门tab中勾选目标部门，部门下所有成员自动生效，后续新加入的成员也自动生效"
+    },
+    "specified_by_role": {
+      "name": "指定成员（按角色）",
+      "value": "指定成员",
+      "tab": "角色",
+      "available_roles": ["运营专员", "运营主管", "人事主管", "人事专员", "财务主管", "财务专员", "IT管理员", "IT专员", "超级管理员"],
+      "note": "在角色tab中勾选目标角色，该角色下所有成员自动生效"
+    },
+    "exclude_specific_department": {
+      "name": "排除某个部门（反选模式）",
+      "value": "指定成员",
+      "tab": "部门",
+      "operation": "选中除目标部门外的所有部门",
+      "use_case": "保护某组数据不被其他人看到时使用",
+      "example": "用户说'6组的case别人不能看' → 在部门tab选中除「6组」外的所有部门"
+    }
+  },
+
+  "behavior_control_presets": {
+    "_note": "适用于「指定网页生效策略」中 mode=可访问 的操作行为控制，以及「所有网页通用策略」",
+    "_options_reference": {
+      "复制/文件上传/文件下载/打印": ["允许", "允许且记录", "限制且记录"],
+      "鼠标点击/键盘输入/查看密码框": ["允许", "限制"]
+    },
+
+    "default_allow_log": {
+      "name": "默认（记录但不限制）",
+      "复制": "允许且记录",
+      "文件上传": "允许且记录",
+      "文件下载": "允许且记录",
+      "打印": "允许且记录",
+      "鼠标点击": "允许",
+      "键盘输入": "允许",
+      "查看密码框": "允许"
+    },
+    "account_security": {
+      "name": "账号安全场景（限制密码框，其余记录）",
+      "复制": "允许且记录",
+      "文件上传": "允许且记录",
+      "文件下载": "允许且记录",
+      "打印": "允许且记录",
+      "鼠标点击": "允许",
+      "键盘输入": "允许",
+      "查看密码框": "限制"
+    },
+    "readonly_mode": {
+      "name": "只读模式（可看不可操作）",
+      "复制": "限制且记录",
+      "文件上传": "限制且记录",
+      "文件下载": "限制且记录",
+      "打印": "限制且记录",
+      "鼠标点击": "限制",
+      "键盘输入": "限制",
+      "查看密码框": "限制"
+    },
+    "strict_lockdown": {
+      "name": "严格锁定（全部限制且记录）",
+      "复制": "限制且记录",
+      "文件上传": "限制且记录",
+      "文件下载": "限制且记录",
+      "打印": "限制且记录",
+      "鼠标点击": "限制",
+      "键盘输入": "限制",
+      "查看密码框": "限制"
+    }
+  },
+
+  "approval_presets": {
+    "no_restriction": {
+      "name": "不限制审批",
+      "仅boss账号可审批": false,
+      "不允许申请访问": false
+    },
+    "boss_approval_only": {
+      "name": "仅BOSS可审批",
+      "仅boss账号可审批": true,
+      "不允许申请访问": false
+    },
+    "full_block": {
+      "name": "完全禁止（不允许申请）",
+      "仅boss账号可审批": true,
+      "不允许申请访问": true
+    }
+  }
+}

@@ -1,0 +1,279 @@
+{
+  "description": "基于角色的批量权限策略，一个角色对应一条策略，管理员无需策略",
+  "url_module_mapping": {
+    "账户/用户权限管理": [
+      "https://*.amazon.*/sw/AccountInfo*",
+      "https://*.amazon.*/user-manager*"
+    ],
+    "商品管理(Inventory)": [
+      "https://*.amazon.*/inventory*",
+      "https://*.amazon.*/product-search*"
+    ],
+    "广告": [
+      "https://*.amazon.*/advertising/*",
+      "https://advertising.amazon.com/*"
+    ],
+    "买家消息(Communication)": [
+      "https://*.amazon.*/messaging/inbox*"
+    ],
+    "订单(Orders)": [
+      "https://*.amazon.*/orders-v3*"
+    ],
+    "财务/资金": [
+      "https://*.amazon.*/payments*",
+      "https://*.amazon.*/gp/payments-account/*"
+    ],
+    "业务报告": [
+      "https://*.amazon.*/business-reports*"
+    ],
+    "发货计划(Shipment Plan)": [
+      "https://*.amazon.*/fba/sendtoamazon*"
+    ]
+  },
+  "role_templates": [
+    {
+      "use_case": "运营总监/经理 — 仅屏蔽用户管理和账户设置",
+      "form_output": {
+        "策略名称": "运营总监用户管理屏蔽",
+        "生效成员": "指定成员 → 角色tab → 选中：运营总监/经理",
+        "生效平台账号": "所有账号",
+        "生效时段": {
+          "模式": "一直生效",
+          "生效日期": {"启用": false},
+          "生效周期": {"启用": false},
+          "生效时间": {"启用": false}
+        },
+        "访问策略描述": "运营总监/经理可查看和管理大部分模块，但不能访问用户权限管理页面，防止越权添加/删除用户。",
+        "访问审批限制": {
+          "仅boss账号可审批": true,
+          "不允许申请访问": false
+        }
+      },
+      "tab_指定网页生效策略": [
+        {"url_rule": "https://*.amazon.*/user-manager*", "mode": "已限制", "说明": "用户权限管理页"},
+        {"url_rule": "https://*.amazon.*/sw/AccountInfo*", "mode": "已限制", "说明": "账户详情/设置页"}
+      ],
+      "tab_所有网页通用策略": {
+        "复制": "允许且记录",
+        "文件上传": "允许且记录",
+        "文件下载": "允许且记录",
+        "打印": "允许且记录",
+        "鼠标点击": "允许",
+        "键盘输入": "允许",
+        "查看密码框": "限制"
+      }
+    },
+    {
+      "use_case": "产品上架专员 — 仅可访问Inventory，屏蔽其余全部",
+      "form_output": {
+        "策略名称": "产品上架专员权限限制",
+        "生效成员": "指定成员 → 角色tab → 选中：产品上架专员",
+        "生效平台账号": "所有账号",
+        "生效时段": {
+          "模式": "一直生效",
+          "生效日期": {"启用": false},
+          "生效周期": {"启用": false},
+          "生效时间": {"启用": false}
+        },
+        "访问策略描述": "产品上架专员仅可访问商品管理（Inventory）模块，其余模块全部屏蔽。",
+        "访问审批限制": {
+          "仅boss账号可审批": true,
+          "不允许申请访问": false
+        }
+      },
+      "tab_指定网页生效策略": [
+        {"url_rule": "https://*.amazon.*/advertising/*", "mode": "已限制", "说明": "广告板块"},
+        {"url_rule": "https://advertising.amazon.com/*", "mode": "已限制", "说明": "广告控制台"},
+        {"url_rule": "https://*.amazon.*/messaging/inbox*", "mode": "已限制", "说明": "买家消息"},
+        {"url_rule": "https://*.amazon.*/orders-v3*", "mode": "已限制", "说明": "订单管理"},
+        {"url_rule": "https://*.amazon.*/payments*", "mode": "已限制", "说明": "资金管理"},
+        {"url_rule": "https://*.amazon.*/gp/payments-account/*", "mode": "已限制", "说明": "结算报表"},
+        {"url_rule": "https://*.amazon.*/business-reports*", "mode": "已限制", "说明": "业务报告"},
+        {"url_rule": "https://*.amazon.*/fba/sendtoamazon*", "mode": "已限制", "说明": "发货计划"},
+        {"url_rule": "https://*.amazon.*/user-manager*", "mode": "已限制", "说明": "用户权限管理"},
+        {"url_rule": "https://*.amazon.*/sw/AccountInfo*", "mode": "已限制", "说明": "账户设置"}
+      ],
+      "tab_所有网页通用策略": {
+        "复制": "允许且记录",
+        "文件上传": "允许且记录",
+        "文件下载": "允许且记录",
+        "打印": "允许且记录",
+        "鼠标点击": "允许",
+        "键盘输入": "允许",
+        "查看密码框": "限制"
+      }
+    },
+    {
+      "use_case": "广告推广专员 — 仅可访问广告板块，屏蔽其余全部",
+      "form_output": {
+        "策略名称": "广告推广专员权限限制",
+        "生效成员": "指定成员 → 角色tab → 选中：广告推广专员",
+        "生效平台账号": "所有账号",
+        "生效时段": {
+          "模式": "一直生效",
+          "生效日期": {"启用": false},
+          "生效周期": {"启用": false},
+          "生效时间": {"启用": false}
+        },
+        "访问策略描述": "广告推广专员仅可访问Campaign Manager和广告报表，其余模块全部屏蔽。",
+        "访问审批限制": {
+          "仅boss账号可审批": true,
+          "不允许申请访问": false
+        }
+      },
+      "tab_指定网页生效策略": [
+        {"url_rule": "https://*.amazon.*/inventory*", "mode": "已限制", "说明": "库存管理"},
+        {"url_rule": "https://*.amazon.*/product-search*", "mode": "已限制", "说明": "产品上架"},
+        {"url_rule": "https://*.amazon.*/messaging/inbox*", "mode": "已限制", "说明": "买家消息"},
+        {"url_rule": "https://*.amazon.*/orders-v3*", "mode": "已限制", "说明": "订单管理"},
+        {"url_rule": "https://*.amazon.*/payments*", "mode": "已限制", "说明": "资金管理"},
+        {"url_rule": "https://*.amazon.*/gp/payments-account/*", "mode": "已限制", "说明": "结算报表"},
+        {"url_rule": "https://*.amazon.*/business-reports*", "mode": "已限制", "说明": "业务报告"},
+        {"url_rule": "https://*.amazon.*/fba/sendtoamazon*", "mode": "已限制", "说明": "发货计划"},
+        {"url_rule": "https://*.amazon.*/user-manager*", "mode": "已限制", "说明": "用户权限管理"},
+        {"url_rule": "https://*.amazon.*/sw/AccountInfo*", "mode": "已限制", "说明": "账户设置"}
+      ],
+      "tab_所有网页通用策略": {
+        "复制": "允许且记录",
+        "文件上传": "允许且记录",
+        "文件下载": "允许且记录",
+        "打印": "允许且记录",
+        "鼠标点击": "允许",
+        "键盘输入": "允许",
+        "查看密码框": "限制"
+      }
+    },
+    {
+      "use_case": "客服人员 — 可访问消息和订单（订单只读），屏蔽其余",
+      "form_output": {
+        "策略名称": "客服人员权限限制",
+        "生效成员": "指定成员 → 角色tab → 选中：客服人员",
+        "生效平台账号": "所有账号",
+        "生效时段": {
+          "模式": "一直生效",
+          "生效日期": {"启用": false},
+          "生效周期": {"启用": false},
+          "生效时间": {"启用": false}
+        },
+        "访问策略描述": "客服人员可访问买家消息（Communication）和订单页（只读模式，可查看但不可操作）。其余模块全部屏蔽。",
+        "访问审批限制": {
+          "仅boss账号可审批": true,
+          "不允许申请访问": false
+        }
+      },
+      "tab_指定网页生效策略": [
+        {
+          "url_rule": "https://*.amazon.*/orders-v3*",
+          "mode": "可访问",
+          "说明": "订单页（只读模式）",
+          "behavior_controls": {
+            "复制": "限制且记录",
+            "文件上传": "限制且记录",
+            "文件下载": "限制且记录",
+            "打印": "限制且记录",
+            "鼠标点击": "限制",
+            "键盘输入": "限制",
+            "查看密码框": "限制"
+          }
+        },
+        {"url_rule": "https://*.amazon.*/inventory*", "mode": "已限制", "说明": "库存管理"},
+        {"url_rule": "https://*.amazon.*/product-search*", "mode": "已限制", "说明": "产品上架"},
+        {"url_rule": "https://*.amazon.*/advertising/*", "mode": "已限制", "说明": "广告板块"},
+        {"url_rule": "https://advertising.amazon.com/*", "mode": "已限制", "说明": "广告控制台"},
+        {"url_rule": "https://*.amazon.*/payments*", "mode": "已限制", "说明": "资金管理"},
+        {"url_rule": "https://*.amazon.*/gp/payments-account/*", "mode": "已限制", "说明": "结算报表"},
+        {"url_rule": "https://*.amazon.*/business-reports*", "mode": "已限制", "说明": "业务报告"},
+        {"url_rule": "https://*.amazon.*/fba/sendtoamazon*", "mode": "已限制", "说明": "发货计划"},
+        {"url_rule": "https://*.amazon.*/user-manager*", "mode": "已限制", "说明": "用户权限管理"},
+        {"url_rule": "https://*.amazon.*/sw/AccountInfo*", "mode": "已限制", "说明": "账户设置"}
+      ],
+      "tab_所有网页通用策略": {
+        "复制": "允许且记录",
+        "文件上传": "允许且记录",
+        "文件下载": "允许且记录",
+        "打印": "允许且记录",
+        "鼠标点击": "允许",
+        "键盘输入": "允许",
+        "查看密码框": "限制"
+      }
+    },
+    {
+      "use_case": "财务人员 — 仅可访问资金管理和业务报告，屏蔽其余",
+      "form_output": {
+        "策略名称": "财务人员权限限制",
+        "生效成员": "指定成员 → 角色tab → 选中：财务人员",
+        "生效平台账号": "所有账号",
+        "生效时段": {
+          "模式": "一直生效",
+          "生效日期": {"启用": false},
+          "生效周期": {"启用": false},
+          "生效时间": {"启用": false}
+        },
+        "访问策略描述": "财务人员可访问资金管理（payments）和业务报告（business-reports），用于查看销售报表、处理发票、核算佣金。其余模块全部屏蔽。",
+        "访问审批限制": {
+          "仅boss账号可审批": true,
+          "不允许申请访问": false
+        }
+      },
+      "tab_指定网页生效策略": [
+        {"url_rule": "https://*.amazon.*/inventory*", "mode": "已限制", "说明": "库存管理"},
+        {"url_rule": "https://*.amazon.*/product-search*", "mode": "已限制", "说明": "产品上架"},
+        {"url_rule": "https://*.amazon.*/advertising/*", "mode": "已限制", "说明": "广告板块"},
+        {"url_rule": "https://advertising.amazon.com/*", "mode": "已限制", "说明": "广告控制台"},
+        {"url_rule": "https://*.amazon.*/messaging/inbox*", "mode": "已限制", "说明": "买家消息"},
+        {"url_rule": "https://*.amazon.*/orders-v3*", "mode": "已限制", "说明": "订单管理"},
+        {"url_rule": "https://*.amazon.*/fba/sendtoamazon*", "mode": "已限制", "说明": "发货计划"},
+        {"url_rule": "https://*.amazon.*/user-manager*", "mode": "已限制", "说明": "用户权限管理"},
+        {"url_rule": "https://*.amazon.*/sw/AccountInfo*", "mode": "已限制", "说明": "账户设置"}
+      ],
+      "tab_所有网页通用策略": {
+        "复制": "允许且记录",
+        "文件上传": "允许且记录",
+        "文件下载": "允许且记录",
+        "打印": "允许且记录",
+        "鼠标点击": "允许",
+        "键盘输入": "允许",
+        "查看密码框": "限制"
+      }
+    },
+    {
+      "use_case": "仓储/物流人员 — 仅可访问Inventory和发货计划，屏蔽其余",
+      "form_output": {
+        "策略名称": "仓储物流人员权限限制",
+        "生效成员": "指定成员 → 角色tab → 选中：仓储/物流人员",
+        "生效平台账号": "所有账号",
+        "生效时段": {
+          "模式": "一直生效",
+          "生效日期": {"启用": false},
+          "生效周期": {"启用": false},
+          "生效时间": {"启用": false}
+        },
+        "访问策略描述": "仓储/物流人员可访问库存管理（Inventory）和发货计划（Shipment Plan），其余模块全部屏蔽。",
+        "访问审批限制": {
+          "仅boss账号可审批": true,
+          "不允许申请访问": false
+        }
+      },
+      "tab_指定网页生效策略": [
+        {"url_rule": "https://*.amazon.*/advertising/*", "mode": "已限制", "说明": "广告板块"},
+        {"url_rule": "https://advertising.amazon.com/*", "mode": "已限制", "说明": "广告控制台"},
+        {"url_rule": "https://*.amazon.*/messaging/inbox*", "mode": "已限制", "说明": "买家消息"},
+        {"url_rule": "https://*.amazon.*/orders-v3*", "mode": "已限制", "说明": "订单管理"},
+        {"url_rule": "https://*.amazon.*/payments*", "mode": "已限制", "说明": "资金管理"},
+        {"url_rule": "https://*.amazon.*/gp/payments-account/*", "mode": "已限制", "说明": "结算报表"},
+        {"url_rule": "https://*.amazon.*/business-reports*", "mode": "已限制", "说明": "业务报告"},
+        {"url_rule": "https://*.amazon.*/user-manager*", "mode": "已限制", "说明": "用户权限管理"},
+        {"url_rule": "https://*.amazon.*/sw/AccountInfo*", "mode": "已限制", "说明": "账户设置"}
+      ],
+      "tab_所有网页通用策略": {
+        "复制": "允许且记录",
+        "文件上传": "允许且记录",
+        "文件下载": "允许且记录",
+        "打印": "允许且记录",
+        "鼠标点击": "允许",
+        "键盘输入": "允许",
+        "查看密码框": "限制"
+      }
+    }
+  ]
+}
